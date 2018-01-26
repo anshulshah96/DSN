@@ -1,0 +1,4 @@
+*.md
+pyenv
+node_modules
+coverage
