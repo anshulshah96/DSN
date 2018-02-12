@@ -23,6 +23,7 @@ contract CrowdBank {
 
     function CrowdBank() public {
         oracle = msg.sender;
+        providerList.push(Provider(0, 0, 0));
     }
 
     function issueToken(address provider, uint tokenSize, bytes32 ip) public {
@@ -44,7 +45,7 @@ contract CrowdBank {
     	return (obj.provider, obj.sToken, obj.ip);
     }
 
-    function getSToken(address provider) public constant returns(uint){
+    function getSToken(address provider) public constant returns(uint) {
         if(providerMap[provider] == 0) return 0;
         return providerList[providerMap[provider]].sToken;
     }

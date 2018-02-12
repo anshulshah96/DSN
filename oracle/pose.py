@@ -1,5 +1,5 @@
 def gen_challenge(size):
 	return "hello2chalnge"
 
-def verify(challenge, solution):
+def verify(challenge, size, solution):
 	return True
