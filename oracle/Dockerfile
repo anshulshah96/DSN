@@ -9,7 +9,7 @@ RUN npm install -g ethereumjs-testrpc
 RUN apt-get install -y \
     python2.7 python-dev \
     python-pip \
-    supervisor curl telnet libssl-dev 
+    supervisor curl telnet libssl-dev pandoc
 
 RUN pip install --upgrade pip
 RUN pip install virtualenv

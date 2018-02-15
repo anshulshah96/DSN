@@ -23,7 +23,6 @@ class Contract():
         self.contract_address = self.tx_receipt['contractAddress']
 
         self.contract_instance = self.w3.eth.contract(self.contract_interface['abi'], self.contract_address, ContractFactoryClass=ConciseContract)
-        print dir(self.contract_instance)
 
     def get_contract_abi(self):
         return self.contract_interface['abi']
