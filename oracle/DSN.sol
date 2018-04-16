@@ -19,6 +19,8 @@ contract CrowdBank {
         address client;
         uint numToken;
         uint rate;
+        uint eTime;
+        uint lVTime;
     }
 
     function CrowdBank() public {
@@ -52,7 +54,7 @@ contract CrowdBank {
 
     // Sent by provider
     // Allowing only 1 service by a provider
-    function useService(uint numToken, uint rate, address client) public {
+    function createService(uint numToken, uint rate, address client) public {
         if(providerMap[msg.sender] == 0) return;
         if(providerList[providerMap[msg.sender]].sToken < numToken) return;
 
@@ -61,14 +63,42 @@ contract CrowdBank {
         providerList[pos].sToken = providerList[pos].sToken - numToken;
 
         // Add Service
-        serviceMap[msg.sender] = Service(msg.sender, client, numToken, rate);
+        uint eTime = block.timestamp;
+        uint lVTime = block.timestamp;
+        serviceMap[msg.sender] = Service(msg.sender, client, numToken, rate, eTime, lVTime);
     }  
 
-    // Sent by client
-    function revokeService(address provider) public {
+    // Sent by client 
+    // Assuming 1 day of service extension
+    function payService(address provider) payable {
         if(providerMap[provider] == 0) return;
-        if(serviceMap[provider].provider == 0) return;
-        if(serviceMap[provider].client != msg.sender) return;
+        if(serviceMap[provider].provider != provider) return;
+        uint amount = msg.value;
+        if(amount < serviceMap[provider].rate) {
+            msg.sender.send(amount);
+            return;
+        }
+
+        if(serviceMap[provider].lVTime == serviceMap[provider].eTime) { 
+            // Service not yet initiated
+            // Add money in buffer 
+            // Do nothing
+        }
+        else {
+            provider.send(serviceMap[provider].rate);
+        }
+        uint lVTime = block.timestamp;
+        serviceMap[provider].lVTime = lVTime;
+        serviceMap[provider].eTime = lVTime + (24*60*60);
+    }
+
+    // Sent by provider
+    function revokeService() public {
+        address provider = msg.sender;
+        if(providerMap[provider] == 0) return;
+        if(serviceMap[provider].provider != msg.sender) return;
+        if(serviceMap[provider].eTime > block.timestamp) return;
+
         uint tokenUsed = serviceMap[provider].numToken;
 
         // Return sToken
