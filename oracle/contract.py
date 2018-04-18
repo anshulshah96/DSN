@@ -35,7 +35,7 @@ class Contract():
         if not Web3.isAddress(provider_addr):
             raise Exception('address not valid')
         self.contract_instance.issueToken(provider_addr, tokenSize, ip, transact={'from': self.w3.eth.accounts[acc_no], 'gas': gas})
-        print "Token Issued"
+        print("Token Issued")
 
     def getSToken(self, address):
         address = Web3.toHex(hexstr=address)
