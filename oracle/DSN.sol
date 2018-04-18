@@ -28,6 +28,7 @@ contract CrowdBank {
         providerList.push(Provider(0, 0, 0));
     }
 
+    // called by oracle
     function issueToken(address provider, uint tokenSize, bytes32 ip) public {
         if(msg.sender != oracle) return;
         if(providerMap[provider] == 0) {
