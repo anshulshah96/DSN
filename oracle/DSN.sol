@@ -59,6 +59,15 @@ contract CrowdBank {
         return providerList[providerMap[provider]].sToken;
     }
 
+    function getProviderByAddress(address provider) public constant returns(uint, uint) {
+        if(providerMap[provider] == 0) return (0,0);
+        return (providerMap[provider],providerList[providerMap[provider]].sToken);
+    }
+
+    function getProviderServiceCount(address provider) public constant returns(uint) {
+        return serviceMap[provider].length;
+    }
+
     // Sent by provider
     // Allowing only 1 service by a provider
     function createService(uint numToken, uint rate, address client) public {

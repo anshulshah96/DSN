@@ -80,7 +80,7 @@ def exec_db(query, args=(), one=False):
     cur.execute(query,args)
     cur.commit()
 
-@app.route("/list")
+@app.route("/list", methods=['GET', 'OPTIONS'])
 @crossdomain(origin='*')
 def list():
     list = []
@@ -89,16 +89,17 @@ def list():
         list.append(dic)
     return jsonify(users=list)
 
-@app.route("/challenge")
+@app.route("/challenge", methods=['GET', 'OPTIONS'])
 @crossdomain(origin='*')
 def get_challenge():
     address = request.args.get('adds')
     size = request.args.get('size')
-    chal = pose.gen_challenge(size)
-    exec_db("INSERT INTO challenge VALUES (?,?,?)",(address,chal,size)) # ensure only one
+    size = int(size)
+    (chal,ans) = pose.gen_challenge(size)
+    exec_db("INSERT INTO challenge VALUES (?,?,?)",(address,chal,ans)) # ensure only one
     return jsonify(challenge=chal)
 
-@app.route("/issue")
+@app.route("/issue", methods=['GET', 'OPTIONS'])
 @crossdomain(origin='*')
 def issue():
     address = request.args.get('adds')
