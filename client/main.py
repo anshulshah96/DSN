@@ -8,7 +8,6 @@ import os
 import json
 
 from remote_contract import RemoteContract
-from db_utils import *
 import requests
 
 app = Flask(__name__)
