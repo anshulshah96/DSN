@@ -1,0 +1,49 @@
+{% extends 'provider/base.html' %}
+{% block content %}
+
+
+
+{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+
+//Code to get type of user.
+
+//Code to get existing contracts.
+
+
+$(document).ready(function() {
+
+  $.ajax({
+  	url : "{{ contract_address }}",
+  }).done( function(response){
+  	console.log(response);
+  });
+
+
+
+  if (typeof web3 !== 'undefined') {
+    console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 MetaCoin, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask")
+    window.web3 = new Web3(web3.currentProvider);
+  } else {
+    console.warn("No web3 detected. Falling back to http://localhost:8545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask");
+    window.web3 = new Web3(new Web3.providers.HttpProvider("http://172.25.12.128:8545"));
+  }
+
+  web3.eth.getAccounts(function(err, accs) {
+    wtoE = web3.toWei(1,'ether');
+    console.log("Accounts : ",accs);
+    if(typeof accs !== 'undefined')
+    {
+	    account  = accs[0];
+    }
+    else
+    {
+    	alert("CANNOT CONNECT TO RPC");
+    }
+  });
+
+});
+</script>
+{% endblock %}
