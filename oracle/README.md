@@ -18,7 +18,11 @@
   - ```testrpc -m "web head biology poet unfold fetch danger tonight sick random version expand" -g 2000 -l 9000000```
 
 ## Firewall Rules
-  - ```sudo ufw allow from 10.42.0.0/16 to any port 8545
-	   sudo ufw allow from 10.42.0.0/16 to any port 8546
-	   sudo ufw allow from 172.25.0.0/16 to any port 8545
-	   sudo ufw allow from 172.25.0.0/16 to any port 8546```
+  - ```
+      sudo ufw allow from 10.42.0.0/16 to any port 8545
+      sudo ufw allow from 10.42.0.0/16 to any port 8546
+      sudo ufw allow from 10.42.0.0/16 to any port 8900
+      sudo ufw allow from 172.25.0.0/16 to any port 8545
+      sudo ufw allow from 172.25.0.0/16 to any port 8546
+      sudo ufw allow from 172.25.0.0/16 to any port 8900
+    ```
