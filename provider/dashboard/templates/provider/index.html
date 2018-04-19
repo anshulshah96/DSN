@@ -1,49 +1,178 @@
 {% extends 'provider/base.html' %}
 {% block content %}
 
+<div class="ui main text container" id="new-provider">
+<div class="ui segment">
+  <div class="ui active inverted dimmer">
+    <div class="ui text loader">Loading</div>
+  </div>
+  <p></p>
+</div>
+</div>
 
+<div class="ui main text container" id="new-provider-form" style="display: none;">
+  <h1 class="ui header">Welcome to DSN</h1>
+  <p></p>
+  <p>
+    -----
+  </p>
+
+  <form class="ui form">
+    <h4 class="ui dividing header">Join as a provider</h4>
+    <div class="field">
+      <label>Storage Rate (in per GB per day)</label>
+      <div class="fields">
+          <input name="rate" placeholder="Rate" type="number">
+      </div>
+      <label>Storage Available (in GB)</label>
+      <div class="fields">
+          <input name="size" placeholder="Size" type="number">
+      </div>
+      <input type="hidden" name="adds" id="new-provider-address">
+    </div>
+    <div class="ui submit button" tabindex="0">Submit Joining Request</div>
+  </form>
+
+</div>
+
+<div class="ui main text container" id="new-provider-verifying" style="display: none;">
+  <h1 class="ui header">Welcome to DSN</h1>
+  <p></p>
+  <p>
+    -----
+  </p>
+
+  <p>
+    Data is being generated and verified. Kindly wait.
+  </p>
+
+</div>
+
+<div class="ui main text container" id="old-provider" style="display: none;">
+  <h1 class="ui header">Semantic UI Fixed Template</h1>
+  <p>This is a basic fixed menu template using fixed size containers.</p>
+  <p>A text container is used for the main container, which is useful for single column layouts</p>
+  <img class="wireframe" src="assets/images/wireframe/media-paragraph.png">
+  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
+  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
+  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
+  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
+  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
+  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
+</div>
 
 {% endblock %}
 
 {% block script %}
 <script type="text/javascript">
 
-//Code to get type of user.
+var abi, contractAddress, contract, account;
 
-//Code to get existing contracts.
+$('.ui.form .submit.button').api({
+    url: '{{ base_contract_address }}/challenge',
+    method : 'GET',
+    serializeForm: true,
+    onSuccess: function(data) {
+      console.log("RECEIVED INITIALIZATION SEED");
+      size = $('#new-provider-size').val();
+      $.post("/generate_data/"+account+"/", { 'seed' : data, 'size' : size }, function(result) {
+        console.log(result);
+      });
+      $('#new-provider-form').css('display','none');
+      $('#new-provider-verifying').css('display','block');
+      setTimeout(function() {
+        location.reload();
+      }, 5000);
+    }
+});
 
+function loadProviderData(contract,account,provider,sToken)
+{
+  var result = contract.getProviderServiceCount.call(account).valueOf();
+  for(var i=0;i<result;i++)
+  {
+    contract.serviceMap(account,i).then(function(output) {
+      console.log(output.valueOf());
+    });
+  }
+  //show his stokens
+  //show his contracts
+  //show button next to his contracts
+}
+
+
+function initializeData(contract,account)
+{
+  var result = contract.getProviderByAddress.call(account).valueOf();
+  var provider = result[0].valueOf();
+  var sToken = result[1].valueOf();
+
+  $.get({
+    url : '/get_status/'+account+'/',
+    success : function(response) {
+      $('#new-provider').css('display','none');
+      $('#new-provider-verifying').css('display','block');
+      setTimeout(function() {
+        location.reload();
+      }, 5000);
+    },
+    error : function(response) {
+      if(provider == 0)
+      {
+        $('#new-provider').css('display','none');
+        $('#new-provider-form').css('display','block');
+        $('#new-provider-address').val(account);
+      }
+      else
+      {
+        $('#new-provider').css('display','none');
+        $('#old-provider').css('display','block');
+        loadProviderData(contract,account,provider,sToken);
+      }
+    }
+  });
+}
+
+function initializeWeb3(contract)
+{
+  web3.eth.getAccounts(function(err, accs) {
+    wtoE = web3.toWei(1,'ether');
+    if(typeof accs !== 'undefined')
+    {
+      account  = accs[2];
+      initializeData(contract,account);
+    }
+    else
+    {
+      alert("CANNOT CONNECT TO RPC");
+    }
+  });
+}
 
 $(document).ready(function() {
 
-  $.ajax({
-  	url : "{{ contract_address }}",
-  }).done( function(response){
-  	console.log(response);
-  });
-
-
-
   if (typeof web3 !== 'undefined') {
-    console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 MetaCoin, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask")
+    console.warn("Using web3 detected from external source. If you find that your accounts don't appear or you have 0 MetaCoin, ensure you've configured that source properly. If using MetaMask, see the following link. Feel free to delete this warning. :) http://truffleframework.com/tutorials/truffle-and-metamask");
     window.web3 = new Web3(web3.currentProvider);
   } else {
     console.warn("No web3 detected. Falling back to http://localhost:8545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask");
     window.web3 = new Web3(new Web3.providers.HttpProvider("http://172.25.12.128:8545"));
+    console.log("CONNECTED");
   }
 
-  web3.eth.getAccounts(function(err, accs) {
-    wtoE = web3.toWei(1,'ether');
-    console.log("Accounts : ",accs);
-    if(typeof accs !== 'undefined')
-    {
-	    account  = accs[0];
-    }
-    else
-    {
-    	alert("CANNOT CONNECT TO RPC");
+  console.log("TRYING CONTRACT");
+
+  $.ajax({
+    method : "GET",
+    url : "{{ base_contract_address }}/contract",
+    success : function(response) {
+      console.log("ON SUCCESS");
+      abi = response['abi'];
+      contractAddress = response['address'];
+      contract = web3.eth.contract(abi).at(contractAddress);
+      initializeWeb3(contract);
     }
   });
-
 });
 </script>
 {% endblock %}

@@ -18,4 +18,6 @@ from django.contrib import admin
 from dashboard.views import *
 urlpatterns = [
     url(r'^$', index),
+    url(r'^generate_data/(?P<address>.*)/$', generate_data),
+    url(r'^get_status/(?P<address>.*)/$', get_status)
 ]
