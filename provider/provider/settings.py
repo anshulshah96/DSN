@@ -25,7 +25,7 @@ SECRET_KEY = 'f-o-pvd4(55u)n4whh^(((zu+jfu^p)+=g+f@+=8=4^o7vh6_#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'dashboard',
     'background_task',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -123,4 +124,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-CONTRACT_ADDRESS = 'http://172.25.12.128:8900'
+CONTRACT_ADDRESS = 'http://10.42.0.11:8900'
+BASE_DIRECTORY = '/home/sh3r/DSN'
+PROVIDER_RATE = 10
+CORS_ORIGIN_ALLOW_ALL = True

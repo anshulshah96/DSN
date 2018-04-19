@@ -24,11 +24,15 @@
       <div class="fields">
           <input name="rate" placeholder="Rate" type="number">
       </div>
-      <label>Storage Available (in GB)</label>
+      <label>Storage Available (in Bytes)</label>
       <div class="fields">
           <input name="size" placeholder="Size" type="number">
       </div>
-      <input type="hidden" name="adds" id="new-provider-address">
+<!--       <label>Absolute Directory Path</label>
+      <div class="fields">
+          <input name="path" placeholder="/home/nikhil96sher/" type="text" id="new-provider-path">
+      </div>
+ -->      <input type="hidden" name="adds" id="new-provider-address">
     </div>
     <div class="ui submit button" tabindex="0">Submit Joining Request</div>
   </form>
@@ -49,16 +53,9 @@
 </div>
 
 <div class="ui main text container" id="old-provider" style="display: none;">
-  <h1 class="ui header">Semantic UI Fixed Template</h1>
+  <h1 class="ui header">Available Storage Tokens : <span id="token-value"></span></h1>
   <p>This is a basic fixed menu template using fixed size containers.</p>
   <p>A text container is used for the main container, which is useful for single column layouts</p>
-  <img class="wireframe" src="assets/images/wireframe/media-paragraph.png">
-  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
-  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
-  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
-  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
-  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
-  <img class="wireframe" src="assets/images/wireframe/paragraph.png">
 </div>
 
 {% endblock %}
@@ -73,9 +70,9 @@ $('.ui.form .submit.button').api({
     method : 'GET',
     serializeForm: true,
     onSuccess: function(data) {
-      console.log("RECEIVED INITIALIZATION SEED");
       size = $('#new-provider-size').val();
-      $.post("/generate_data/"+account+"/", { 'seed' : data, 'size' : size }, function(result) {
+      path = $('#new-provider-path').val();
+      $.post("/generate_data/"+account+"/", { 'seed' : data, 'size' : size, 'path' : path }, function(result) {
         console.log(result);
       });
       $('#new-provider-form').css('display','none');
@@ -88,16 +85,15 @@ $('.ui.form .submit.button').api({
 
 function loadProviderData(contract,account,provider,sToken)
 {
+  $('#token-value').html(sToken);
   var result = contract.getProviderServiceCount.call(account).valueOf();
+  console.log("NO OF SERVICES : ",result);
   for(var i=0;i<result;i++)
   {
     contract.serviceMap(account,i).then(function(output) {
       console.log(output.valueOf());
     });
   }
-  //show his stokens
-  //show his contracts
-  //show button next to his contracts
 }
 
 
@@ -112,9 +108,6 @@ function initializeData(contract,account)
     success : function(response) {
       $('#new-provider').css('display','none');
       $('#new-provider-verifying').css('display','block');
-      setTimeout(function() {
-        location.reload();
-      }, 5000);
     },
     error : function(response) {
       if(provider == 0)
@@ -156,7 +149,7 @@ $(document).ready(function() {
     window.web3 = new Web3(web3.currentProvider);
   } else {
     console.warn("No web3 detected. Falling back to http://localhost:8545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask");
-    window.web3 = new Web3(new Web3.providers.HttpProvider("http://172.25.12.128:8545"));
+    window.web3 = new Web3(new Web3.providers.HttpProvider("http://10.42.0.11:8545"));
     console.log("CONNECTED");
   }
 
