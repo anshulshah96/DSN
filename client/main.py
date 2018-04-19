@@ -8,7 +8,6 @@ import os
 import json
 
 from remote_contract import RemoteContract
-from db_utils import *
 import requests
 
 app = Flask(__name__)
@@ -18,7 +17,14 @@ c_obj = RemoteContract('http://localhost:8545', 'http://172.25.12.128:8900/contr
 
 @app.route("/", methods=['GET', 'OPTIONS'])
 def main():
-    return render_template('index.html', selfAddress = c_obj.get_eth_address())
+	for row in query_db('select * from UPLOADS'):
+        dic = {
+        	'file_path': row[0], 'row_url': row[1], 
+    		'provider': row[2], 'rate': row[3],
+    		'service_num': row[4]
+        }
+        list.append(dic)
+    return render_template('index.html', selfAddress = c_obj.get_eth_address(), )
 
 @app.route("/upload", methods=['GET', 'OPTIONS'])
 def upload():
@@ -27,6 +33,7 @@ def upload():
 	provider_url = request.args.get('providerurl')
 	r_rate = requests.get(provider_url + "/status")
 	rate = r_rate.json()['rate']
+	# send file, tag, state to provider
 	r = requests.post(provider_url + "/upload/",
 		data = {
 			"name": file_path,
@@ -56,9 +63,10 @@ def challenge():
 	service_num = request.args.get('service_num')
 	file_path = request.args.get('path')
 
-	# chal = encode(file)
-	# request answer
-	# verify
+	# chal = beat.gen_challenge(file)
+	# gets proof : public_beat.prove()
+	# beat.verify(proof, chal, state)
+	# 
 
 	return jsonify(result = True)
 
@@ -72,7 +80,7 @@ def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
-    return (rv[0] if rv else None) if one else rv
+    return (rv[len(rv)-1] if rv else None) if one else rv
 def init_db():
     with app.app_context():
         db = get_db()    
