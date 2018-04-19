@@ -44,9 +44,9 @@ contract CrowdBank {
     }
 
     function getProvider(uint pos) public constant returns(address, uint, bytes32) {
-    	if(pos >= providerList.length) return (0,0,0);
-    	Provider obj = providerList[pos];
-    	return (obj.provider, obj.sToken, obj.ip);
+        if(pos >= providerList.length) return (0,0,0);
+        Provider obj = providerList[pos];
+        return (obj.provider, obj.sToken, obj.ip);
     }
 
     function getSToken(address provider) public constant returns(uint) {
@@ -75,40 +75,43 @@ contract CrowdBank {
     // Assuming 1 day of service extension
     function payService(address provider, uint pos) payable {
         if(providerMap[provider] == 0) return;
-        if(serviceMap[provider][pos].provider != provider) return;
+        uint servNo = serviceMap[provider][pos];
+        if(servList[servNo].provider != provider) return;
         uint amount = msg.value;
-        if(amount < serviceMap[provider][pos].rate) {
+        if(amount < servList[servNo].rate) {
             msg.sender.send(amount);
             return;
         }
 
-        if(serviceMap[provider][pos].lVTime == serviceMap[provider][pos].eTime) { 
+        if(servList[servNo].lVTime == servList[servNo].eTime) { 
             // Service not yet initiated
             // Add money in buffer 
             // Do nothing
         }
         else {
-            provider.send(serviceMap[provider][pos].rate);
+            provider.send(servList[servNo].rate);
         }
         uint lVTime = block.timestamp;
-        serviceMap[provider][pos].lVTime = lVTime;
-        serviceMap[provider][pos].eTime = lVTime + (24*60*60);
+        servList[servNo].lVTime = lVTime;
+        servList[servNo].eTime = lVTime + (24*60*60);
     }
 
     // Sent by provider
     function revokeService(uint spos) public {
         address provider = msg.sender;
         if(providerMap[provider] == 0) return;
-        if(serviceMap[provider][spos].provider != msg.sender) return;
-        if(serviceMap[provider][spos].eTime > block.timestamp) return;
+        uint servNo = serviceMap[provider][spos];
+        if(servList[servNo].provider != msg.sender) return;
+        if(servList[servNo].eTime > block.timestamp) return;
 
-        uint tokenUsed = serviceMap[provider][spos].numToken;
+        uint tokenUsed = servList[servNo].numToken;
 
         // Return sToken
         uint ppos = providerMap[provider];
         providerList[ppos].sToken = providerList[ppos].sToken + tokenUsed;
 
         // Remove service
-        serviceMap[provider][spos].provider = 0;
+        servList[servNo].provider = 0;
+        servList[servNo].client = 0;
     }
 }
