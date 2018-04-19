@@ -30,6 +30,9 @@ class Contract():
     def get_contract_address(self):
         return self.contract_address
 
+    def get_contract_bin(self):
+        return self.contract_interface['bin']
+
     def issueToken(self, provider_addr, tokenSize, ip, acc_no, gas):
         provider_addr = Web3.toHex(hexstr=provider_addr)
         if not Web3.isAddress(provider_addr):

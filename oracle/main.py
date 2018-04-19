@@ -81,6 +81,7 @@ def exec_db(query, args=(), one=False):
     cur.commit()
 
 @app.route("/list")
+@crossdomain(origin='*')
 def list():
     list = []
     for provider in query_db('select * from challenge'):
@@ -89,6 +90,7 @@ def list():
     return jsonify(users=list)
 
 @app.route("/challenge")
+@crossdomain(origin='*')
 def get_challenge():
     address = request.args.get('adds')
     size = request.args.get('size')
@@ -97,6 +99,7 @@ def get_challenge():
     return jsonify(challenge=chal)
 
 @app.route("/issue")
+@crossdomain(origin='*')
 def issue():
     address = request.args.get('adds')
     solution = request.args.get('sol')
@@ -111,7 +114,8 @@ def issue():
 def contract():
     contract_address = c_obj.get_contract_address()
     contract_abi = c_obj.get_contract_abi()
-    return jsonify({"address": contract_address, "abi": contract_abi})
+    contract_bin = c_obj.get_contract_bin()
+    return jsonify({"address": contract_address, "abi": contract_abi, "bin": contract_bin})
 
 if __name__ == "__main__":
     # c_obj.issueToken('0xd3CDA913deB6f67967B99D67aCDFa1712C293601', 10, "192.168.12.1", 0, 440000)
