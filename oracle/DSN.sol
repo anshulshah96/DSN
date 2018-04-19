@@ -4,9 +4,10 @@ contract CrowdBank {
     address public oracle;
 
     Provider[] public providerList;
+    Service[] public servList;
 
     mapping (address=>uint) public providerMap;
-    mapping (address=>Service) public serviceMap;
+    mapping (address=>uint[]) public serviceMap;
 
     struct Provider {
         address provider;
@@ -66,47 +67,48 @@ contract CrowdBank {
         // Add Service
         uint eTime = block.timestamp;
         uint lVTime = block.timestamp;
-        serviceMap[msg.sender] = Service(msg.sender, client, numToken, rate, eTime, lVTime);
+        servList.push(Service(msg.sender, client, numToken, rate, eTime, lVTime));
+        serviceMap[msg.sender].push(servList.length-1);
     }  
 
     // Sent by client 
     // Assuming 1 day of service extension
-    function payService(address provider) payable {
+    function payService(address provider, uint pos) payable {
         if(providerMap[provider] == 0) return;
-        if(serviceMap[provider].provider != provider) return;
+        if(serviceMap[provider][pos].provider != provider) return;
         uint amount = msg.value;
-        if(amount < serviceMap[provider].rate) {
+        if(amount < serviceMap[provider][pos].rate) {
             msg.sender.send(amount);
             return;
         }
 
-        if(serviceMap[provider].lVTime == serviceMap[provider].eTime) { 
+        if(serviceMap[provider][pos].lVTime == serviceMap[provider][pos].eTime) { 
             // Service not yet initiated
             // Add money in buffer 
             // Do nothing
         }
         else {
-            provider.send(serviceMap[provider].rate);
+            provider.send(serviceMap[provider][pos].rate);
         }
         uint lVTime = block.timestamp;
-        serviceMap[provider].lVTime = lVTime;
-        serviceMap[provider].eTime = lVTime + (24*60*60);
+        serviceMap[provider][pos].lVTime = lVTime;
+        serviceMap[provider][pos].eTime = lVTime + (24*60*60);
     }
 
     // Sent by provider
-    function revokeService() public {
+    function revokeService(uint spos) public {
         address provider = msg.sender;
         if(providerMap[provider] == 0) return;
-        if(serviceMap[provider].provider != msg.sender) return;
-        if(serviceMap[provider].eTime > block.timestamp) return;
+        if(serviceMap[provider][spos].provider != msg.sender) return;
+        if(serviceMap[provider][spos].eTime > block.timestamp) return;
 
-        uint tokenUsed = serviceMap[provider].numToken;
+        uint tokenUsed = serviceMap[provider][spos].numToken;
 
         // Return sToken
-        uint pos = providerMap[provider];
-        providerList[pos].sToken = providerList[pos].sToken + tokenUsed;
+        uint ppos = providerMap[provider];
+        providerList[ppos].sToken = providerList[ppos].sToken + tokenUsed;
 
         // Remove service
-        serviceMap[provider].provider = 0;
+        serviceMap[provider][spos].provider = 0;
     }
 }
