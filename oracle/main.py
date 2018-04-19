@@ -94,8 +94,8 @@ def list():
 def get_challenge():
     address = request.args.get('adds')
     size = request.args.get('size')
-    chal = pose.gen_challenge(size)
-    exec_db("INSERT INTO challenge VALUES (?,?,?)",(address,chal,size)) # ensure only one
+    (chal,ans) = pose.gen_challenge(size)
+    exec_db("INSERT INTO challenge VALUES (?,?,?)",(address,chal,ans)) # ensure only one
     return jsonify(challenge=chal)
 
 @app.route("/issue", methods=['GET', 'OPTIONS'])
