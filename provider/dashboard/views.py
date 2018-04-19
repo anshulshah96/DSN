@@ -11,14 +11,24 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from dashboard.forms import UploadFileForm
 from django.http import JsonResponse
-
-import json
+from dashboard.pos import Pos_provider,Challenge
+import json, requests
 from background_task import background
 
-@background(schedule=1)
+# @background(schedule=1)
 def verify_storage(address,seed,size):
     pos_provider = Pos_provider(seed,size,settings.BASE_DIRECTORY + '/testing')
     pos_provider.setup()
+
+    r = requests.get(settings.CONTRACT_ADDRESS+"/challenge", params = {'adds' : address, 'size' : size})
+    challenge = r.json()['challenge']
+    solution = pos_provider.prove(Challenge(bytearray.fromhex(challenge)))
+    r = requests.get(settings.CONTRACT_ADDRESS+"/issue", params = {'adds' : address, 'sol' : solution})
+    print(r.text)
+    try:
+        Status.objects.get(address=address).delete()
+    except:
+        pass
 
 # Create your views here.
 def index(request):
@@ -37,12 +47,11 @@ def generate_data(request,address):
     status,created = Status.objects.get_or_create(address=address)
     status.generated = False
     status.save()
-
     seed = request.POST.get('seed',None)
     size = request.POST.get('size',None)
-    verify_storage(address,seed,size)
+    verify_storage(address,seed,int(size))
 
-    return HttpResponse("OK")
+    return HttpResponse("OKAY")
 
 def status(request):
     return JsonResponse({ 'rate' : settings.PROVIDER_RATE })
@@ -53,7 +62,7 @@ def upload_file(request):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             handle_uploaded_file(request.FILES['file'],form.data['client'],form.data['name'])
-            ## CREATE CONTRACT HERE
+            ## CREATE AGREEMENT HERE
             return JsonResponse({'service_num' : 0})
         else:
             print(form.errors)

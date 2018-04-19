@@ -26,7 +26,7 @@
       </div>
       <label>Storage Available (in Bytes)</label>
       <div class="fields">
-          <input name="size" placeholder="Size" type="number">
+          <input name="size" placeholder="Size" type="number" id="new-provider-size">
       </div>
 <!--       <label>Absolute Directory Path</label>
       <div class="fields">
@@ -66,13 +66,12 @@
 var abi, contractAddress, contract, account;
 
 $('.ui.form .submit.button').api({
-    url: '{{ base_contract_address }}/challenge',
+    url: '{{ base_contract_address }}/seed',
     method : 'GET',
     serializeForm: true,
     onSuccess: function(data) {
       size = $('#new-provider-size').val();
-      path = $('#new-provider-path').val();
-      $.post("/generate_data/"+account+"/", { 'seed' : data, 'size' : size, 'path' : path }, function(result) {
+      $.post("/generate_data/"+account+"/", { 'seed' : data['seed'], 'size' : size}, function(result) {
         console.log(result);
       });
       $('#new-provider-form').css('display','none');
@@ -108,6 +107,9 @@ function initializeData(contract,account)
     success : function(response) {
       $('#new-provider').css('display','none');
       $('#new-provider-verifying').css('display','block');
+      setTimeout(function() {
+        location.reload();
+      }, 5000);
     },
     error : function(response) {
       if(provider == 0)
