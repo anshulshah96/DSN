@@ -111,7 +111,7 @@ def issue():
 def contract():
     contract_address = c_obj.get_contract_address()
     contract_abi = c_obj.get_contract_abi()
-    return jsonify(address=contract_address, abi=contract_abi)
+    return jsonify({"address": contract_address, "abi": contract_abi})
 
 if __name__ == "__main__":
     # c_obj.issueToken('0xd3CDA913deB6f67967B99D67aCDFa1712C293601', 10, "192.168.12.1", 0, 440000)
