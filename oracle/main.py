@@ -66,7 +66,7 @@ def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
-    return (rv[0] if rv else None) if one else rv
+    return (rv[len(rv)-1] if rv else None) if one else rv
 def init_db():
     with app.app_context():
         db = get_db()    
@@ -85,17 +85,30 @@ def exec_db(query, args=(), one=False):
 def list():
     list = []
     for provider in query_db('select * from challenge'):
-        dic = {'address': provider[0], 'challenge': provider[1], 'size': provider[2]}
+        seedEntry = query_db("SELECT * FROM seed WHERE address = ?",[provider[0]], one=True)
+        dic = {'provider': provider[0], 'providerurl': provider[4], 'challenge': provider[1], 'size': provider[3], 'seed': seedEntry[1]}
         list.append(dic)
     return jsonify(users=list)
+
+@app.route("/seed", methods=['GET', 'OPTIONS'])
+@crossdomain(origin='*')
+def get_seed():
+    address = request.args.get('adds')
+    seed = pose.get_seed()
+    exec_db("INSERT INTO seed VALUES (?,?)",(address, seed)) # ensure only one
+    return jsonify(seed=seed)
 
 @app.route("/challenge", methods=['GET', 'OPTIONS'])
 @crossdomain(origin='*')
 def get_challenge():
     address = request.args.get('adds')
     size = request.args.get('size')
-    (chal,ans) = pose.gen_challenge(size)
-    exec_db("INSERT INTO challenge VALUES (?,?,?)",(address,chal,ans)) # ensure only one
+    size = int(size)
+    seedEntry = query_db("SELECT * FROM seed WHERE address = ?",[address], one=True)
+    seed = seedEntry[1]
+    (chal,ans) = pose.gen_challenge(seed, size)
+    print("Correct Answer: " +  str(ans))
+    exec_db("INSERT INTO challenge VALUES (?,?,?,?,?)",(address,chal,ans,size,request.remote_addr))
     return jsonify(challenge=chal)
 
 @app.route("/issue", methods=['GET', 'OPTIONS'])
@@ -103,10 +116,11 @@ def get_challenge():
 def issue():
     address = request.args.get('adds')
     solution = request.args.get('sol')
+    solution = int(solution)
     provider = query_db("SELECT * FROM challenge WHERE address = ?",[address], one=True)
     rec = pose.verify(provider[1], provider[2], solution)
     if(rec):
-        c_obj.issueToken(provider[0], provider[2], request.remote_addr, 0, 440000)
+        c_obj.issueToken(provider[0], provider[3], request.remote_addr, 0, 440000)
     return jsonify(receipt=rec)
 
 @app.route('/contract', methods=['GET', 'OPTIONS'])
@@ -121,5 +135,5 @@ if __name__ == "__main__":
     # c_obj.issueToken('0xd3CDA913deB6f67967B99D67aCDFa1712C293601', 10, "192.168.12.1", 0, 440000)
     # print c_obj.getSToken('0xd3CDA913deB6f67967B99D67aCDFa1712C293601')
     init_db()
-    app.run(host='0.0.0.0', port=8900)
+    app.run(host='0.0.0.0', port=8900, debug=True)
     print('end')

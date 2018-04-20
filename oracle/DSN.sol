@@ -43,6 +43,11 @@ contract CrowdBank {
         }
     }
 
+    function getProviderByAddress(address provider) public constant returns(uint, uint) {
+        if(providerMap[provider] == 0) return (0,0);
+        return (providerMap[provider],providerList[providerMap[provider]].sToken);
+    }
+
     function getProvider(uint pos) public constant returns(address, uint, bytes32) {
         if(pos >= providerList.length) return (0,0,0);
         Provider obj = providerList[pos];
@@ -54,13 +59,17 @@ contract CrowdBank {
         return providerList[providerMap[provider]].sToken;
     }
 
-    function getProviderByAddress(address provider) public constant returns(uint, uint) {
-        if(providerMap[provider] == 0) return (0,0);
-        return (providerMap[provider],providerList[providerMap[provider]].sToken);
-    }
-
     function getProviderServiceCount(address provider) public constant returns(uint) {
         return serviceMap[provider].length;
+    }
+
+    function getServicebyAddressPosition(address provider, uint pos) public constant 
+        returns(address, address, uint, uint, uint, uint)
+    {
+        uint listPos = serviceMap[provider][pos];
+        Service serv = servList[listPos];
+        return (serv.provider, serv.client, serv.numToken, serv.rate,
+            serv.eTime, serv.lVTime);        
     }
 
     // Sent by provider

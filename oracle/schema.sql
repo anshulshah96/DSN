@@ -1,3 +1,4 @@
 DROP TABLE IF EXISTS challenge;
-CREATE TABLE challenge (address varchar(255),challenge varchar(255),size int);
--- INSERT INTO challenge VALUES ('abcdefabcedf','challenge1',001)
+DROP TABLE IF EXISTS seed;
+CREATE TABLE challenge (address varchar(255),challenge varchar(255),solution int,size int,url varchar(255));
+CREATE TABLE seed (address varchar(255),seed varchar(255));
