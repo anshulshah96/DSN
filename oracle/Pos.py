@@ -2,17 +2,14 @@ import random
 import hashlib
 import os
 import binascii
-
 HASH_LENGTH = 32
 RECORD_LENGTH = 36
-
 class Challenge(object):
     """The challenge object that represents a challenge posed to the server
     for proof of space    """
 
     def __init__(self, hashval):
         """Initialization method
-
         :param hashval : value of the hash to be founded
         """
         self.hashval = hashval
@@ -49,7 +46,6 @@ class Proof(object):
     def fromdict(dict):
         """Takes a dictionary as an argument and returns a new Proof object
         from the dictionary.
-
         """
         pass
 
@@ -59,11 +55,9 @@ class Proof(object):
 class Pos(object):
     def __init__(self, seed, filesz, path=None):
         """Initialization method
-
         :param seed: the root of the merkle tree
         :param filesz: the size of the file
         :param path: path of the challenge on merkle tree
-
         """
         self.seed = seed
         self.filesz = filesz
@@ -84,25 +78,26 @@ class Pos(object):
         path = random.randint(1,self.filesz/HASH_LENGTH)
         self.path = path
         strpath = ""
+
         while path>1:
             if path%2==0:
                 strpath+='0'
             else:
                 strpath+='1'
             path/=2
-            path=int(path)
-        strpath = strpath[::-1] 
+
+        strpath = strpath[::-1]
+
         i=0
         curr = self.seed
         curr = bytearray.fromhex(curr)
-        curr = bytes(curr)
         while i<len(strpath):
             if(strpath[i]=='0'):
-                curr=bytearray.fromhex(hashlib.sha256((str(curr)+'0').encode('utf-8')).hexdigest())
+                curr=bytearray.fromhex(hashlib.sha256(curr+'0').hexdigest())
             else:
-                curr=bytearray.fromhex(hashlib.sha256((str(curr)+'1').encode('utf-8')).hexdigest())
+                curr=bytearray.fromhex(hashlib.sha256(curr+'1').hexdigest())
             i+=1
-            curr = bytes(curr)
+
         return Challenge(curr)
 
     def verify(self, proof):
@@ -115,11 +110,9 @@ class Pos(object):
 class Pos_provider(object):
     def __init__(self, seed, filesz, file):
         """Initialization method
-
         :param seed: the root of the merkle tree
         :param filesz: the size of the file
         :param file: file used to read and write
-
         """
         self.seed = seed
         self.filesz = filesz
@@ -139,20 +132,24 @@ class Pos_provider(object):
 
     def setup(self):
         open(self.file, 'wb').close()
-        file = open(self.file,'rb+')
+        file = open(self.file,'r+')
 
         temp = self.seed + hex(1)[2:].zfill(8)
+        # print bytearray.fromhex(temp)
         file.write(bytearray.fromhex(temp))
         i=2
         while i<=self.filesz/HASH_LENGTH:
-            file.seek((int)(i/2-1)*RECORD_LENGTH)
+            file.seek((i/2-1)*RECORD_LENGTH)
             par = file.read(HASH_LENGTH)
-            temp = hashlib.sha256((str(par)+'0').encode('utf-8')).hexdigest() + hex(i)[2:].zfill(8)
+
+            temp = hashlib.sha256(par+'0').hexdigest() + hex(i)[2:].zfill(8)
+            # print bytearray.fromhex(temp)
             file.seek(0,2)
             file.write(bytearray.fromhex(temp))
             i+=1
             if i<=self.filesz/HASH_LENGTH:
-                temp = hashlib.sha256((str(par)+'1').encode('utf-8')).hexdigest() + hex(i)[2:].zfill(8)
+                temp = hashlib.sha256(par+'1').hexdigest() + hex(i)[2:].zfill(8)
+                # print bytearray.fromhex(temp)
                 file.seek(0,2)
                 file.write(bytearray.fromhex(temp))
                 i+=1
@@ -171,13 +168,12 @@ class Pos_provider(object):
         right = self.exacfilesz/RECORD_LENGTH-1
         curr = None
         path = None
-
         while curr!=h and left<=right:
             mid = (left+right)/2
-            mid = int(mid)
-            file.seek(int(mid)*RECORD_LENGTH)
+            file.seek(mid*RECORD_LENGTH)
             curr = file.read(HASH_LENGTH)
-            
+            # print mid
+            # print binascii.hexlify(curr)
             if curr==h:
                 path = file.read(4)
                 break
@@ -188,7 +184,7 @@ class Pos_provider(object):
 
         if path!=None:
             return int(binascii.hexlify(path),16)
-            
+
 # HASH_LENGTH = 32
 # RECORD_LENGTH = 36
 # p = Pos(hashlib.sha256('0').hexdigest(), 320000000)

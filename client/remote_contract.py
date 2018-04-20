@@ -28,3 +28,7 @@ class RemoteContract():
         if not Web3.isAddress(provider):
             raise Exception('Provider Address is not valid')
         return self.contract_instance.getPRate(address)
+
+    def get_eth_balance(self, address):
+        provider = Web3.toHex(hexstr=address)
+        return self.w3.fromWei(self.w3.eth.getBalance(address),'ether')

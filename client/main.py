@@ -6,6 +6,7 @@ from flask import g
 from flask import render_template
 import os
 import json
+import heartbeat
 
 from remote_contract import RemoteContract
 import requests
@@ -13,7 +14,8 @@ import requests
 app = Flask(__name__)
 DATABASE = '/tmp/clienttest.db'
 ORACLE_URL = 'http://localhost:8900'
-c_obj = RemoteContract('http://localhost:8545', 'http://172.25.12.128:8900/contract')
+c_obj = RemoteContract('http://localhost:8545', 'http://localhost:8900/contract')
+beatMap = {}
 
 @app.route("/", methods=['GET', 'OPTIONS'])
 def main():
@@ -25,26 +27,49 @@ def main():
         uploads.append(dic)
     r = requests.get(ORACLE_URL + "/list")
     providerlist = r.json()['users']
-    return render_template('index.html', selfAddress = c_obj.get_eth_address(), uploads = uploads, providerlist = providerlist)
+    # clientpath = os.getcwd()
+    clientpath = "/Users/anshul/test.txt"
+    return render_template('index.html', selfAddress = c_obj.get_eth_address(), uploads = uploads, 
+        providerlist = providerlist, cwd = clientpath, balance = c_obj.get_eth_balance(c_obj.get_eth_address()))
 
 @app.route("/upload", methods=['GET', 'OPTIONS'])
 def upload():
     file_path = request.args.get('path')
-    provider = request.args.get('provider')
-    provider_url = request.args.get('providerurl')
-    r_rate = requests.get(provider_url + "/status")
-    rate = r_rate.json()['rate']
+    r = requests.get(ORACLE_URL + "/list")
+    providerlist = r.json()['users']
+    print(providerlist)
+    best_provider = providerlist[0]['provider']
+    best_provider_url = providerlist[0]['providerurl']
+    min_rate = 1000000000
+    for provider in providerlist:
+        r_rate = requests.get(provider['providerurl'] + "/status")
+        rate = r_rate.json()['rate']
+        if(rate < min_rate):
+            min_rate = rate
+            best_provider = provider['provider']
+            best_provider_url = provider['providerurl']
+
+    beat = heartbeat.PySwizzle.PySwizzle()
+    with open(file_path,'rb') as f:
+        (tag,state) = beat.encode(f)
+    beatMap[file_path] = beat
+    file_size = os.path.getsize(file_path)
+
     # send file, tag, state to provider
-    r = requests.post(provider_url + "/upload/",
+    r = requests.post(best_provider_url + "/upload/",
         data = {
             "name": file_path,
-            "client": c_obj.get_eth_address()
+            "client": c_obj.get_eth_address(),
+            "size": file_size,
+            "tag": tag.todict(),
+            "state": state.todict()
         },
         files = {"file": open(file_path, 'rb').read()}
     )
     service_num = r.json()['service_num']
-    exec_db("INSERT INTO UPLOADS VALUES (?,?,?,?,?)",(file_path, provider_url, provider, rate, service_num))
-    return jsonify({"status": r.status_code, "reason": r.reason})
+    exec_db("INSERT INTO UPLOADS VALUES (?,?,?,?,?)",(file_path, best_provider_url, 
+        best_provider, rate, service_num))
+    return jsonify({"status": r.status_code, "reason": r.reason, "service_num": service_num})
 
 @app.route("/download", methods=['GET', 'OPTIONS'])
 def download():
