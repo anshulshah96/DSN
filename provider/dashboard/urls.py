@@ -19,6 +19,7 @@ from dashboard.views import *
 urlpatterns = [
     url(r'^$', index),
     url(r'^upload/$', upload_file),
+    url(r'^download/(?P<client>.*)/(?P<service_num>.*)/$', download),
     url(r'^status/$', status),
     url(r'^generate_data/(?P<address>.*)/$', generate_data),
     url(r'^get_status/(?P<address>.*)/$', get_status)
