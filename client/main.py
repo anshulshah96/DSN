@@ -7,6 +7,7 @@ from flask import render_template
 import os
 import json
 import heartbeat
+import hashlib
 
 from remote_contract import RemoteContract
 import requests
@@ -16,6 +17,13 @@ DATABASE = '/tmp/clienttest.db'
 ORACLE_URL = 'http://localhost:8900'
 c_obj = RemoteContract('http://localhost:8545', 'http://localhost:8900/contract')
 beatMap = {}
+
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 @app.route("/", methods=['GET', 'OPTIONS'])
 def main():
@@ -53,7 +61,8 @@ def upload():
     with open(file_path,'rb') as f:
         (tag,state) = beat.encode(f)
     global beatMap
-    beatMap[file_path] = (beat,tag,state)
+    fhash = md5(file_path)
+    beatMap[file_path] = (beat,tag,state,fhash)
     print(file_path)
     file_size = os.path.getsize(file_path)
 
@@ -84,6 +93,13 @@ def download():
     
     return jsonify(url = url)
 
+@app.route("/revoke", methods=['GET', 'OPTIONS'])
+def revoke():
+    provider = request.args.get('provider')
+    servicenum = request.args.get('servicenum')
+    exec_db("DELETE FROM UPLOADS WHERE provider = ? AND servicenum = ?",(provider, servicenum))
+    return jsonify(response = True)
+
 @app.route("/challenge", methods=['GET', 'OPTIONS'])
 def challenge():
     provider = request.args.get('provider')
@@ -93,7 +109,7 @@ def challenge():
     rate = request.args.get('rate')
 
     global beatMap
-    (beat,tag,state) = beatMap[file_path]
+    (beat,tag,state,fhash) = beatMap[file_path]
     print(json.dumps(beat.todict()))
     print(json.dumps(tag.todict()))
     print(json.dumps(state.todict()))
@@ -106,14 +122,19 @@ def challenge():
     r = requests.post(provider_url + "/challenge/", data=payload)
     proof = r.json()['proof']
     proof = json.loads(proof)
-    # print(proof)
-    proof = heartbeat.PySwizzle.Proof.fromdict(proof)
-    result = beat.verify(proof, chal, state)
-    result = True
+    phash = r.json()['hash']
+    # proof = heartbeat.PySwizzle.Proof.fromdict(proof)
+    # result = beat.verify(proof, chal, state)
     # rate = c_obj.get_service(provider, service_num)[3]
-    rate = int(rate)
+    # rate = int(rate)
     # if result:
     #     c_obj.pay_service(provider, service_num, rate)
+    result = False
+    if phash == fhash:
+        result = True
+    else:
+        print(phash)
+        print(fhash)
     print("The proof is: " + str(result))
     return jsonify(result = result)
 

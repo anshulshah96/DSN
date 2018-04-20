@@ -144,4 +144,21 @@ contract CrowdBank {
         servList[servNo].provider = 0;
         servList[servNo].client = 0;
     }
+
+    // Sent by provider
+    function revokeServiceByClient(address provider, uint spos) public {
+        if(providerMap[provider] == 0) return;
+        uint servNo = serviceMap[provider][spos];
+        if(servList[servNo].eTime > block.timestamp) return;
+
+        uint tokenUsed = servList[servNo].numToken;
+
+        // Return sToken
+        uint ppos = providerMap[provider];
+        providerList[ppos].sToken = providerList[ppos].sToken + tokenUsed;
+
+        // Remove service
+        servList[servNo].provider = 0;
+        servList[servNo].client = 0;
+    }
 }
