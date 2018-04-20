@@ -98,10 +98,6 @@ class Pos(object):
                 curr=bytearray.fromhex(hashlib.sha256(binascii.hexlify(curr)+'0').hexdigest())
             else:
                 curr=bytearray.fromhex(hashlib.sha256(binascii.hexlify(curr)+'1').hexdigest())
-            # if(strpath[i]=='0'):
-            #     curr=bytearray.fromhex(hashlib.sha256(str(curr)+'0').hexdigest())
-            # else:
-            #     curr=bytearray.fromhex(hashlib.sha256(str(curr)+'1').hexdigest())
             i+=1
 
         return Challenge(curr)
