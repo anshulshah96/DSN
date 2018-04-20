@@ -3,6 +3,9 @@ import hashlib
 import os
 import binascii
 
+HASH_LENGTH = 32
+RECORD_LENGTH = 36
+
 class Challenge(object):
     """The challenge object that represents a challenge posed to the server
     for proof of space    """
@@ -95,9 +98,13 @@ class Pos(object):
         curr = bytes(curr)
         while i<len(strpath):
             if(strpath[i]=='0'):
-                curr=bytearray.fromhex(hashlib.sha256((str(curr)+'0').encode('utf-8')).hexdigest())
+                curr=bytearray.fromhex(hashlib.sha256(binascii.hexlify(curr)+'0').hexdigest())
             else:
-                curr=bytearray.fromhex(hashlib.sha256((str(curr)+'1').encode('utf-8')).hexdigest())
+                curr=bytearray.fromhex(hashlib.sha256(binascii.hexlify(curr)+'1').hexdigest())
+            # if(strpath[i]=='0'):
+            #     curr=bytearray.fromhex(hashlib.sha256(str(curr)+'0').hexdigest())
+            # else:
+            #     curr=bytearray.fromhex(hashlib.sha256(str(curr)+'1').hexdigest())
             i+=1
             curr = bytes(curr)
         return Challenge(curr)
@@ -144,12 +151,13 @@ class Pos_provider(object):
         while i<=self.filesz/HASH_LENGTH:
             file.seek((int)(i/2-1)*RECORD_LENGTH)
             par = file.read(HASH_LENGTH)
-            temp = hashlib.sha256((str(par)+'0').encode('utf-8')).hexdigest() + hex(i)[2:].zfill(8)
+            st = str(binascii.hexlify(par))[2:-1]
+            temp = hashlib.sha256((st+'0').encode('utf-8')).hexdigest() + hex(i)[2:].zfill(8)
             file.seek(0,2)
             file.write(bytearray.fromhex(temp))
             i+=1
             if i<=self.filesz/HASH_LENGTH:
-                temp = hashlib.sha256((str(par)+'1').encode('utf-8')).hexdigest() + hex(i)[2:].zfill(8)
+                temp = hashlib.sha256((st+'1').encode('utf-8')).hexdigest() + hex(i)[2:].zfill(8)
                 file.seek(0,2)
                 file.write(bytearray.fromhex(temp))
                 i+=1
@@ -185,7 +193,7 @@ class Pos_provider(object):
 
         if path!=None:
             return int(binascii.hexlify(path),16)
-            
+
 # HASH_LENGTH = 32
 # RECORD_LENGTH = 36
 # p = Pos(hashlib.sha256('0').hexdigest(), 320000000)
