@@ -30,7 +30,7 @@ def main():
     # clientpath = os.getcwd()
     clientpath = "/Users/anshul/test.txt"
     return render_template('index.html', selfAddress = c_obj.get_eth_address(), uploads = uploads, 
-        providerlist = providerlist, cwd = clientpath)
+        providerlist = providerlist, cwd = clientpath, balance = c_obj.get_eth_balance(c_obj.get_eth_address()))
 
 @app.route("/upload", methods=['GET', 'OPTIONS'])
 def upload():
