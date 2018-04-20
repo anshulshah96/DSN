@@ -3,6 +3,9 @@ import hashlib
 import os
 import binascii
 
+HASH_LENGTH = 32
+RECORD_LENGTH = 36
+
 class Challenge(object):
     """The challenge object that represents a challenge posed to the server
     for proof of space    """
