@@ -63,7 +63,7 @@ contract CrowdBank {
         return serviceMap[provider].length;
     }
 
-    function getServicebyAddressPosition(address provider, uint pos) public constant 
+    function getServiceByAddressPosition(address provider, uint pos) public constant 
         returns(address, address, uint, uint, uint, uint)
     {
         uint listPos = serviceMap[provider][pos];
