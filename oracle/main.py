@@ -85,7 +85,8 @@ def exec_db(query, args=(), one=False):
 def list():
     list = []
     for provider in query_db('select * from challenge'):
-        dic = {'address': provider[0], 'challenge': provider[1], 'size': provider[2]}
+        seedEntry = query_db("SELECT * FROM seed WHERE address = ?",[provider[0]], one=True)
+        dic = {'provider': provider[0], 'providerurl': provider[4], 'challenge': provider[1], 'size': provider[3], 'seed': seedEntry[1]}
         list.append(dic)
     return jsonify(users=list)
 
@@ -106,8 +107,8 @@ def get_challenge():
     seedEntry = query_db("SELECT * FROM seed WHERE address = ?",[address], one=True)
     seed = seedEntry[1]
     (chal,ans) = pose.gen_challenge(seed, size)
-    print(ans)
-    exec_db("INSERT INTO challenge VALUES (?,?,?,?)",(address,chal,ans,size)) # ensure only one
+    print("Correct Answer: " +  str(ans))
+    exec_db("INSERT INTO challenge VALUES (?,?,?,?,?)",(address,chal,ans,size,request.remote_addr))
     return jsonify(challenge=chal)
 
 @app.route("/issue", methods=['GET', 'OPTIONS'])
