@@ -91,7 +91,7 @@ contract CrowdBank {
 
     // Sent by client 
     // Assuming 1 day of service extension
-    function payService(address provider, uint pos) payable {
+    function payService(address provider, uint pos) public payable {
         if(providerMap[provider] == 0) return;
         uint servNo = serviceMap[provider][pos];
         if(servList[servNo].provider != provider) return;
@@ -112,6 +112,18 @@ contract CrowdBank {
         uint lVTime = block.timestamp;
         servList[servNo].lVTime = lVTime;
         servList[servNo].eTime = lVTime + (24*60*60);
+    }
+
+    // Sent by client 
+    // Assuming 1 day of service extension
+    function updateService(address provider, uint pos) public {
+        if(providerMap[provider] == 0) return;
+        uint servNo = serviceMap[provider][pos];
+        if(servList[servNo].provider != provider) return;
+
+        uint lVTime = block.timestamp;
+        // servList[servNo].lVTime = lVTime;
+        // servList[servNo].eTime = lVTime + (86400);
     }
 
     // Sent by provider

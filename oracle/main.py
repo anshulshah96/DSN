@@ -116,10 +116,10 @@ def get_challenge():
 def issue():
     address = request.args.get('adds')
     solution = request.args.get('sol')
-    # solution = int(solution)
+    solution = int(solution)
     provider = query_db("SELECT * FROM challenge WHERE address = ?",[address], one=True)
-    # rec = pose.verify(provider[1], provider[2], solution)
-    rec = True
+    rec = pose.verify(provider[1], provider[2], solution)
+    # rec = True
     if(rec):
         c_obj.issueToken(provider[0], provider[3], "http://"+request.remote_addr+":8000", 0, 440000)
     return jsonify(receipt=rec)

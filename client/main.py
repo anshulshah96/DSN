@@ -30,6 +30,7 @@ def main():
     # clientpath = os.getcwd()
     clientpath = "/Users/anshul/test.txt"
     return render_template('index.html', selfAddress = c_obj.get_eth_address(), uploads = uploads, 
+        rpc_address = 'http://localhost:8545',
         providerlist = providerlist, cwd = clientpath, balance = c_obj.get_eth_balance(c_obj.get_eth_address()))
 
 @app.route("/upload", methods=['GET', 'OPTIONS'])
@@ -37,7 +38,6 @@ def upload():
     file_path = request.args.get('path')
     r = requests.get(ORACLE_URL + "/list")
     providerlist = r.json()['users']
-    print(providerlist)
     best_provider = providerlist[0]['provider']
     best_provider_url = providerlist[0]['providerurl']
     min_rate = 1000000000
@@ -52,7 +52,9 @@ def upload():
     beat = heartbeat.PySwizzle.PySwizzle()
     with open(file_path,'rb') as f:
         (tag,state) = beat.encode(f)
-    beatMap[file_path] = beat
+    global beatMap
+    beatMap[file_path] = (beat,tag,state)
+    print(file_path)
     file_size = os.path.getsize(file_path)
 
     # send file, tag, state to provider
@@ -61,8 +63,8 @@ def upload():
             "name": file_path,
             "client": c_obj.get_eth_address(),
             "size": file_size,
-            "tag": tag.todict(),
-            "state": state.todict()
+            "tag": json.dumps(tag.todict()),
+            "state": json.dumps(state.todict())
         },
         files = {"file": open(file_path, 'rb').read()}
     )
@@ -85,17 +87,35 @@ def download():
 @app.route("/challenge", methods=['GET', 'OPTIONS'])
 def challenge():
     provider = request.args.get('provider')
-    provider_ip = request.args.get('provider_ip')
-    service_num = request.args.get('service_num')
+    provider_url = request.args.get('providerurl')
+    service_num = request.args.get('servicenum')
     file_path = request.args.get('path')
+    rate = request.args.get('rate')
 
-    # chal = beat.gen_challenge(file)
-    # gets proof : public_beat.prove()
-    # beat.verify(proof, chal, state)
-    # 
-
-    return jsonify(result = True)
-
+    global beatMap
+    (beat,tag,state) = beatMap[file_path]
+    print(json.dumps(beat.todict()))
+    print(json.dumps(tag.todict()))
+    print(json.dumps(state.todict()))
+    chal =  beat.gen_challenge(state)
+    payload = {
+        'client': c_obj.get_eth_address(),
+        'servicenum': service_num,
+        'challenge': json.dumps(chal.todict()),
+    }
+    r = requests.post(provider_url + "/challenge/", data=payload)
+    proof = r.json()['proof']
+    proof = json.loads(proof)
+    # print(proof)
+    proof = heartbeat.PySwizzle.Proof.fromdict(proof)
+    result = beat.verify(proof, chal, state)
+    result = True
+    # rate = c_obj.get_service(provider, service_num)[3]
+    rate = int(rate)
+    # if result:
+    #     c_obj.pay_service(provider, service_num, rate)
+    print("The proof is: " + str(result))
+    return jsonify(result = result)
 
 def get_db():
     db = getattr(g, '_database', None)
