@@ -4,7 +4,10 @@
 <head>
     <title>Python Flask Bucket List App</title>
  
- 
+    <script
+      src="https://code.jquery.com/jquery-3.1.1.min.js"
+      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+      crossorigin="anonymous"></script>
     <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
  
     <link href="http://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet">
@@ -16,12 +19,21 @@
         <div class="header">
             <h3 class="text-muted">ETH ADDRESS: {{ selfAddress }}</h3>
         </div>
+
+        <div class="header">
+            <form class="filepath" id="filepathform">
+                FilePath: <input id="pathinput" type="text" name="Path" value="{{ cwd }}"><br>
+                <button type="submit" value="Submit">
+            </form>
+        </div>
  
             {% for upload in uploads %}
                 <ul class=entries>
-                    <li><h2>{{ upload.file_path }}</h2>{{ upload.provider_url }}</li>
-                    <li><h2>{{ upload.provider }}</h2>{{ upload.rate }}</li>
-                    <li><h2>{{ upload.service_num }}</h2></li>
+                    <li><h2>{{ upload.file_path }}</h2></li>
+                    <li><h6>URL: {{ upload.provider_url }}</h6></li>
+                    <li><h6>Provider: {{ upload.provider }}</h6></li>
+                    <li><h6>Rate: {{ upload.rate }}</h6></li>
+                    <li><h6>SNUM: {{ upload.service_num }}</h6></li>
                 </ul>
             {% else %}
                 <ul class=entries>
@@ -31,18 +43,45 @@
         
             {% for provider in providerlist %}
                 <ul class=entries>
-                    <li><h2>{{ provider.provider }}</h2></li>
-                    <li><h2>{{ provider.providerurl }}</h2></li>
-                    <li><h2>{{ provider.size }}</h2></li>
+                    <li><h2>Provider: {{ provider.provider }}</h2></li>
+                    <li><h6>URL: {{ provider.providerurl }}</h6></li>
+                    <li><h6>SIZE: {{ provider.size }}</h6></li>
                 </ul>
             {% else %}
                 <ul class=entries>
                     <li><em>Unbelievable.  No Provider here so far</em>
                 </ul>
             {% endfor %}
-        </ul>
  
     </div>
+
 </body>
- 
+ <script type="text/javascript">
+     $('#filepathform').submit(function(e){
+        e.preventDefault();
+        $.get('upload', params = {
+            'path' : $('#pathinput').val()            
+            }, function(data, status){
+                alert("Data: " + data + "\nStatus: " + status);
+            }
+        );
+        return false;
+     });
+    //     file_path: $('#pathinput').val(),
+    //     url: '/seed',
+    //     method : 'GET',
+    //     serializeForm: true,
+    //     onSuccess: function(data) {
+    //       size = $('#new-provider-size').val();
+    //       $.post("/generate_data/"+account+"/", { 'seed' : data['seed'], 'size' : size}, function(result) {
+    //         console.log(result);
+    //       });
+    //       $('#new-provider-form').css('display','none');
+    //       $('#new-provider-verifying').css('display','block');
+    //       setTimeout(function() {
+    //         location.reload();
+    //       }, 5000);
+    // }
+// });
+ </script>
 </html>

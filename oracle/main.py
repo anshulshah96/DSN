@@ -108,7 +108,7 @@ def get_challenge():
     seed = seedEntry[1]
     (chal,ans) = pose.gen_challenge(seed, size)
     print("Correct Answer: " +  str(ans))
-    exec_db("INSERT INTO challenge VALUES (?,?,?,?,?)",(address,chal,ans,size,request.remote_addr))
+    exec_db("INSERT INTO challenge VALUES (?,?,?,?,?)",(address,chal,ans,size,"http://"+request.remote_addr))
     return jsonify(challenge=chal)
 
 @app.route("/issue", methods=['GET', 'OPTIONS'])
@@ -120,7 +120,7 @@ def issue():
     provider = query_db("SELECT * FROM challenge WHERE address = ?",[address], one=True)
     rec = pose.verify(provider[1], provider[2], solution)
     if(rec):
-        c_obj.issueToken(provider[0], provider[3], request.remote_addr, 0, 440000)
+        c_obj.issueToken(provider[0], provider[3], "http://"+request.remote_addr, 0, 440000)
     return jsonify(receipt=rec)
 
 @app.route('/contract', methods=['GET', 'OPTIONS'])
