@@ -51,10 +51,10 @@
       <h1 class="ui header">Hi Client! Welcome to DSN</h1>
       <p></p>
       <p>
-        Your Ethereum Address  : <span id="provider-address">{{ selfAddress }}</span>
+        Your Ethereum Address  : <b><span id="provider-address">{{ selfAddress }}</span></b>
       </p>
       <p>
-        Your Ethereum Balance  : <span id="provider-balance">{{ balance }}</span>
+        Your Ethereum Balance  : <b><span id="provider-balance">{{ balance }}</span></b>
       </p>
 
     <div class="ui divider"></div>
@@ -96,7 +96,7 @@
             <td><a href="{{upload.provider_url}}/download/{{selfAddress}}/{{upload.service_num}}/"><i class="download icon"></i></a></td>
             <td><button class="ui button" onclick="challenge({{upload.service_num}})"><i class="fire icon"></i></button></td>
             <!-- <td><button class="ui button" onclick="revokeService({{upload.service_num}})"><i class="times icon"></i></button></td> -->
-            <span id="pu{{upload.service_num}}">{{upload.provider_url}}</span>
+            <span style="visibility:hidden" id="pu{{upload.service_num}}">{{upload.provider_url}}</span>
         </tr>
 
     {% endfor %}
@@ -137,7 +137,7 @@
         var providerurl = $('#pu'+servicenum).html();
         var rate = $('#rt'+servicenum).html();
         var provider = $('#pa'+servicenum).html();
-        contract.revokeServiceByClient(provider, servicenum, {gas: GAS_AMOUNT, from: account});
+        contract.revokeServiceByClient(provider, parseInt(servicenum), {gas: GAS_AMOUNT, from: account});
         $.ajax({
             url: 'revoke',
             method : 'GET',
@@ -155,12 +155,10 @@
     function challenge(servicenum)
     {
         var filepath = $('#fp'+servicenum).html();
-        console.log(filepath);
         var providerurl = $('#pu'+servicenum).html();
         var rate = $('#rt'+servicenum).html();
         var provider = $('#pa'+servicenum).html();
-        web3.eth.sendTransaction({to:provider, from:account, value:web3.toWei(rate, "ether")})
-        console.log("REPAY DONE SUCCESSFULLY");
+
         $.get('challenge', params = {
                 'servicenum' : servicenum,
                 'provider': provider,
@@ -170,6 +168,10 @@
             }, function(data, status){
                 console.log(data)
                 if(data['result']==true) {
+                    web3.eth.sendTransaction({to:provider, from:account, value:web3.toWei(rate, "ether")})
+                    // console.log("REPAY DONE SUCCESSFULLY");
+                    contract.updateService(provider, servicenum, {gas: 4000000, from: account});
+                    console.log("SERVICE UPDATE SUCCESSFULLY");
                     alert("DATA SUCCESSFULLY VERIFIED");
                 }
                 else {
@@ -203,6 +205,8 @@
         {
           account  = accs[1];
           acclist = accs;
+          window.acc = accs[1];
+          window.actlist = acclist;
         }
         else
         {
@@ -232,6 +236,7 @@
           abi = response['abi'];
           contractAddress = response['address'];
           contract = web3.eth.contract(abi).at(contractAddress);
+          window.cont = contract;
           initializeWeb3(contract);
         }
       });
