@@ -16,6 +16,7 @@ import json, requests
 from background_task import background
 from web3 import Web3
 from web3.providers.rpc import HTTPProvider
+import os
 
 def get_contract():
     r = requests.get(settings.CONTRACT_ADDRESS + "/contract")
@@ -61,6 +62,7 @@ def generate_data(request,address):
     status.save()
     seed = request.POST.get('seed',None)
     size = request.POST.get('size',None)
+    status.delete()
     verify_storage(address,seed,int(size))
 
     return HttpResponse("OKAY")
@@ -70,14 +72,16 @@ def status(request):
 
 def download(request,client,service_num):
     try:
-        service = Service.objects.get(client=address,service_num=service_num)
+        service = Service.objects.filter(client=client,service_num=service_num)[0]
+        print(service.path)
         if os.path.exists(service.path):
-            with open(file_path, 'rb') as fh:
+            with open(service.path, 'rb') as fh:
                 response = HttpResponse(fh.read(), content_type="application/bytes")
-                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file_path)
+                response['Content-Disposition'] = 'inline; filename=' + os.path.basename(service.path)
                 return response
         raise Http404
-    except:
+    except Exception as e:
+        print(e)
         raise Http404
 
 @csrf_exempt
@@ -93,10 +97,11 @@ def upload_file(request):
 
             handle_uploaded_file(request.FILES['file'],form.data['client'],name)
             web3, contract = get_contract()
-            contract.functions.createService(form.data['size'],settings.PROVIDER_RATE,form.data['client']).transact({'from' : web3.eth.accounts[2],'gas':420000})
+            print(form.data)
+            contract.functions.createService(int(form.data['size']),settings.PROVIDER_RATE,form.data['client']).transact({'from' : web3.eth.accounts[2],'gas':420000})
             current_count = contract.functions.getProviderServiceCount(web3.eth.accounts[2]).call()
             print("GOT CURRENT COUNT AS : ",current_count)
-            Service.objects.create(client=form.data['client'],service_num=current_count,path=settings.BASE_DIRECTORY+'/'+client+'/'+name)
+            Service.objects.create(client=form.data['client'],service_num=current_count,path=settings.BASE_DIRECTORY+'/'+form.data['client']+'/'+name)
             return JsonResponse({'service_num' : current_count})
         else:
             print(form.errors)

@@ -7,6 +7,9 @@
   <p>
     Your Ethereum Address  : <span id="provider-address"></span>
   </p>
+  <p>
+    Your Ethereum Balance  : <span id="provider-balance"></span>
+  </p>
 
   <div class="ui segment" id="new-provider">
     <div class="ui active inverted dimmer">
@@ -93,20 +96,32 @@ function loadProviderData(contract,account,provider,sToken)
   $('#token-value').html(sToken);
   var result = contract.getProviderServiceCount.call(account).valueOf();
   console.log("NO OF SERVICES : ",result);
-  $('#contract-count').html(result);
-  for(var i=0;i<result;i++)
+  // $('#contract-count').html(result);
+  var actualResult = 0;
+  for(var j=0;j<result;j++)
   {
-    output = contract.getServiceByAddressPosition.call(account,i).valueOf();
+    output = contract.getServiceByAddressPosition.call(account,j).valueOf();
     console.log(output);
     var outputString = "<tr>";
     for(var i=0;i<output.length;i++)
     {
       outputString = outputString + '<td>' + output[i].valueOf() + '</td>';
     }
-    outputString += '<td><button class="negative ui icon button"><i class="times icon"></i></button></td>';
+    outputString += '<td><button class="negative ui icon button" onclick="revokeService(\''+j+'\')"><i class="times icon"></i></button></td>';
     outputString += '</tr>';
-    $('#provider-contracts tbody').append(outputString);
+    if(output[0] != '0x0000000000000000000000000000000000000000')
+    {
+      actualResult += 1;
+      $('#provider-contracts tbody').append(outputString);
+    }
   }
+  $('#contract-count').html(actualResult);
+}
+
+function revokeService(position)
+{
+  contract.revokeService(position,{gas: 4100000, from: account});
+  location.reload();
 }
 
 function initializeData(contract,account)
@@ -148,7 +163,13 @@ function initializeWeb3(contract)
     if(typeof accs !== 'undefined')
     {
       account  = accs[2];
-      $('#provider-address').html(account)
+      web3.eth.getBalance(account, function (error, result) {
+        if (!error) {
+          console.log(result);
+          $('#provider-balance').html(web3.fromWei(result.valueOf()) + " ETH");
+        };
+      });
+      $('#provider-address').html(account);
       initializeData(contract,account);
     }
     else
