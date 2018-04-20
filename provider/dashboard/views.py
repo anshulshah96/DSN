@@ -101,7 +101,7 @@ def upload_file(request):
             contract.functions.createService(int(form.data['size']),settings.PROVIDER_RATE,form.data['client']).transact({'from' : web3.eth.accounts[2],'gas':420000})
             current_count = contract.functions.getProviderServiceCount(web3.eth.accounts[2]).call()
             print("GOT CURRENT COUNT AS : ",current_count)
-            Service.objects.create(client=form.data['client'],service_num=current_count,path=settings.BASE_DIRECTORY+'/'+form.data['client']+'/'+name)
+            Service.objects.create(client=form.data['client'],service_num=current_count,path=settings.BASE_DIRECTORY+'/'+form.data['client']+'/'+name,tag=form.data['tag'],state=form.data['state'])
             return JsonResponse({'service_num' : current_count})
         else:
             print(form.errors)
@@ -115,3 +115,24 @@ def handle_uploaded_file(f,client,name):
     with open(settings.BASE_DIRECTORY+'/'+client+'/'+name, 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)
+
+@csrf_exempt
+def challenge(request):
+    client =request.POST.get('client',None)
+    service_num = request.POST.get('servicenum',None)
+    challenge = request.POST.get('challenge',None)
+    challenge = json.loads(challenge)
+    import heartbeat
+    # import ipdb
+    # ipdb.set_trace()
+    service = Service.objects.filter(client=client,service_num=service_num)[0]
+    challenge = heartbeat.PySwizzle.Challenge.fromdict(challenge)
+    print(service.tag)
+    print(service.state)
+    tag = heartbeat.PySwizzle.Tag.fromdict(json.loads(service.tag))
+    state = heartbeat.PySwizzle.State.fromdict(json.loads(service.state))
+    beat = heartbeat.PySwizzle.PySwizzle()
+    public_beat = beat.get_public()
+    proof = public_beat.prove(open(service.path,'rb'),challenge,tag)
+    print(json.dumps(proof.todict()))
+    return JsonResponse({'proof' : json.dumps(proof.todict())})

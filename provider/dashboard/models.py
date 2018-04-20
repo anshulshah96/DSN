@@ -12,3 +12,5 @@ class Service(models.Model):
 	client = models.CharField(max_length=70)
 	service_num = models.IntegerField(default=0)
 	path = models.CharField(max_length=60000)
+	tag = models.CharField(max_length=60000)
+	state = models.CharField(max_length=60000)
