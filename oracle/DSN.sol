@@ -63,6 +63,15 @@ contract CrowdBank {
         return serviceMap[provider].length;
     }
 
+    function getServicebyAddressPosition(address provider, uint pos) public constant 
+        returns(address, address, uint, uint, uint, uint)
+    {
+        uint listPos = serviceMap[provider][pos];
+        Service serv = servList[listPos];
+        return (serv.provider, serv.client, serv.numToken, serv.rate,
+            serv.eTime, serv.lVTime);        
+    }
+
     // Sent by provider
     // Allowing only 1 service by a provider
     function createService(uint numToken, uint rate, address client) public {
