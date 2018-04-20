@@ -1,61 +1,70 @@
 {% extends 'provider/base.html' %}
 {% block content %}
 
-<div class="ui main text container" id="new-provider">
-<div class="ui segment">
-  <div class="ui active inverted dimmer">
-    <div class="ui text loader">Loading</div>
-  </div>
-  <p></p>
-</div>
-</div>
-
-<div class="ui main text container" id="new-provider-form" style="display: none;">
-  <h1 class="ui header">Welcome to DSN</h1>
+<div class="ui main container">
+  <h1 class="ui header">Hi Provider! Welcome to DSN</h1>
   <p></p>
   <p>
-    -----
+    Your Ethereum Address  : <span id="provider-address"></span>
+  </p>
+  <p>
+    Your Ethereum Balance  : <span id="provider-balance"></span>
   </p>
 
-  <form class="ui form">
-    <h4 class="ui dividing header">Join as a provider</h4>
-    <div class="field">
-      <label>Storage Rate (in per GB per day)</label>
-      <div class="fields">
-          <input name="rate" placeholder="Rate" type="number">
-      </div>
-      <label>Storage Available (in Bytes)</label>
-      <div class="fields">
-          <input name="size" placeholder="Size" type="number" id="new-provider-size">
-      </div>
-<!--       <label>Absolute Directory Path</label>
-      <div class="fields">
-          <input name="path" placeholder="/home/nikhil96sher/" type="text" id="new-provider-path">
-      </div>
- -->      <input type="hidden" name="adds" id="new-provider-address">
+  <div class="ui segment" id="new-provider">
+    <div class="ui active inverted dimmer">
+      <div class="ui text loader">Loading</div>
     </div>
-    <div class="ui submit button" tabindex="0">Submit Joining Request</div>
-  </form>
+    <p></p>
+  </div>
 
-</div>
+  <div id="new-provider-form" style="display: none;">
+    <form class="ui form">
+      <h4 class="ui dividing header">Join as a provider</h4>
+      <div class="field">
+        <label>Storage Rate (in per GB per day)</label>
+        <div class="fields">
+            <input name="rate" placeholder="Rate" type="number">
+        </div>
+        <label>Storage Available (in Bytes)</label>
+        <div class="fields">
+            <input name="size" placeholder="Size" type="number" id="new-provider-size">
+        </div>
+  <!--       <label>Absolute Directory Path</label>
+        <div class="fields">
+            <input name="path" placeholder="/home/nikhil96sher/" type="text" id="new-provider-path">
+        </div>
+   -->      <input type="hidden" name="adds" id="new-provider-address">
+      </div>
+      <div class="ui submit button" tabindex="0">Submit Joining Request</div>
+    </form>
+  </div>
 
-<div class="ui main text container" id="new-provider-verifying" style="display: none;">
-  <h1 class="ui header">Welcome to DSN</h1>
-  <p></p>
-  <p>
-    -----
-  </p>
+  <div id="new-provider-verifying" style="display: none;">
+    <p>
+      Data is being generated and verified. Kindly wait.
+    </p>
+  </div>
 
-  <p>
-    Data is being generated and verified. Kindly wait.
-  </p>
+  <div id="old-provider" style="display: none;">
+    <p>Available Storage Tokens : <span id="token-value"></span></p>
+    <p>No. of contracts : <span id="contract-count"></span></p>
 
-</div>
-
-<div class="ui main text container" id="old-provider" style="display: none;">
-  <h1 class="ui header">Available Storage Tokens : <span id="token-value"></span></h1>
-  <p>This is a basic fixed menu template using fixed size containers.</p>
-  <p>A text container is used for the main container, which is useful for single column layouts</p>
+    <table class="ui celled table" id="provider-contracts">
+      <thead>
+        <tr>
+        <th>Provider</th>
+        <th>Client</th>
+        <th>Num of Tokens</th>
+        <th>Rate</th>
+        <th>Expiry Time</th>
+        <th>Last Verification Time</th>
+        <th>Revoke</th>
+      </tr></thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 {% endblock %}
@@ -76,9 +85,9 @@ $('.ui.form .submit.button').api({
       });
       $('#new-provider-form').css('display','none');
       $('#new-provider-verifying').css('display','block');
-      setTimeout(function() {
-        location.reload();
-      }, 5000);
+      // setTimeout(function() {
+      //   location.reload();
+      // }, 5000);
     }
 });
 
@@ -87,14 +96,33 @@ function loadProviderData(contract,account,provider,sToken)
   $('#token-value').html(sToken);
   var result = contract.getProviderServiceCount.call(account).valueOf();
   console.log("NO OF SERVICES : ",result);
-  for(var i=0;i<result;i++)
+  // $('#contract-count').html(result);
+  var actualResult = 0;
+  for(var j=0;j<result;j++)
   {
-    contract.serviceMap(account,i).then(function(output) {
-      console.log(output.valueOf());
-    });
+    output = contract.getServiceByAddressPosition.call(account,j).valueOf();
+    console.log(output);
+    var outputString = "<tr>";
+    for(var i=0;i<output.length;i++)
+    {
+      outputString = outputString + '<td>' + output[i].valueOf() + '</td>';
+    }
+    outputString += '<td><button class="negative ui icon button" onclick="revokeService(\''+j+'\')"><i class="times icon"></i></button></td>';
+    outputString += '</tr>';
+    if(output[0] != '0x0000000000000000000000000000000000000000')
+    {
+      actualResult += 1;
+      $('#provider-contracts tbody').append(outputString);
+    }
   }
+  $('#contract-count').html(actualResult);
 }
 
+function revokeService(position)
+{
+  contract.revokeService(position,{gas: 4100000, from: account});
+  location.reload();
+}
 
 function initializeData(contract,account)
 {
@@ -135,6 +163,13 @@ function initializeWeb3(contract)
     if(typeof accs !== 'undefined')
     {
       account  = accs[2];
+      web3.eth.getBalance(account, function (error, result) {
+        if (!error) {
+          console.log(result);
+          $('#provider-balance').html(web3.fromWei(result.valueOf()) + " ETH");
+        };
+      });
+      $('#provider-address').html(account);
       initializeData(contract,account);
     }
     else
@@ -151,7 +186,7 @@ $(document).ready(function() {
     window.web3 = new Web3(web3.currentProvider);
   } else {
     console.warn("No web3 detected. Falling back to http://localhost:8545. You should remove this fallback when you deploy live, as it's inherently insecure. Consider switching to Metamask for development. More info here: http://truffleframework.com/tutorials/truffle-and-metamask");
-    window.web3 = new Web3(new Web3.providers.HttpProvider("http://10.42.0.11:8545"));
+    window.web3 = new Web3(new Web3.providers.HttpProvider("{{ rpc_address }}"));
     console.log("CONNECTED");
   }
 

@@ -7,3 +7,8 @@ from django.db import models
 class Status(models.Model):
 	address = models.CharField(unique=True,max_length=70)
 	generated = models.BooleanField(default=False)
+
+class Service(models.Model):
+	client = models.CharField(max_length=70)
+	service_num = models.IntegerField(default=0)
+	path = models.CharField(max_length=60000)
